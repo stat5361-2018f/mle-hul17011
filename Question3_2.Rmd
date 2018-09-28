@@ -1,5 +1,5 @@
 ---
-title: "Question3_2"
+title: "Question3-2"
 output: pdf_document
 author: "Hukai Luo"
 date: "`r format(Sys.time(), '%d %B %Y')`"
