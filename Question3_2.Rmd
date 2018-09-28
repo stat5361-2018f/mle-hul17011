@@ -1,0 +1,153 @@
+---
+title: "Question3_2"
+output: pdf_document
+author: "Hukai Luo"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract:
+    In this assignment, we use the probability density function to find the log-likelihood function and the method-of-moments estimator of $\theta$. Then we will discuss the influence of different initial value when using Newton-Raphson method to estimate the Maximum Likelihood Estimation for $\theta$.
+---
+
+# 1 Many local maxima
+
+The probability density function with parameter $\theta$:
+\begin{align*}
+  f(x; \theta) = \frac{1 - \cos(x - \theta)}{2\pi},   
+  \quad 0\le x\le 2\pi, \quad \theta \in (-\pi, \pi).
+\end{align*}
+And the random sample from the distribution is
+
+$x_i = 3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 3.53, 2.28, 1.96, 2.53, 3.88, 2.22, 3.47, 4.82, 2.46, 2.99, 2.54, 0.52$
+
+- Find the the log-likelihood function of $\theta$ based on the sample and plot it between $-\pi$ and $\pi$.
+- Find the method-of-moments estimator of $\theta$.  That is, the estimator $\tilde\theta_n$ is value of $\theta$ with
+\begin{align*}
+  E (X \mid \theta) = \bar X_n,
+\end{align*}
+where $\bar X_n$ is the sample mean. This means you have to first find the expression for $E (X \mid \theta)$.
+- Find the MLE for $\theta$ using the Newton--Raphson method initial value $\theta_0 = \tilde\theta_n$.
+- What solutions do you find when you start at 
+$\theta_0 = -2.7$ and $\theta_0 = 2.7$?
+- Repeat the above using 200 equally spaced starting values
+between $-\pi$ and $\pi$.  Partition the values into sets of attraction. That is, divide the set of starting values into separate groups, with each group corresponding to a separate unique outcome of the optimization.
+
+# 2 Log-likelihood function
+
+The log-likelihood function with parameter $\theta$ and $x$:
+\begin{align*}
+ \ell(\theta) = \sum^n_{i=1}{ln(1-\cos{(x-\theta)})} - nln2\pi
+\end{align*}
+\newline
+then plot it between $-\pi$ and $\pi$:
+```{r code, results='hide'}
+X = c(3.91, 4.85, 2.28, 4.06, 3.70, 4.04, 5.46, 3.53, 2.28, 1.96,
+      2.53, 3.88, 2.22, 3.47, 4.82, 2.46, 2.99, 2.54, 0.52)
+logfunction <- function(x) {                        #calculate the log likelihood function
+  logfunction <- 0
+  for (i in 1:length(X)){
+    logfunction <- logfunction+log(1-cos(X[i]-x))-log(2*pi)
+  }
+  logfunction
+}
+
+library("ggplot2")                                        #plot the function against theta
+ggplot(data.frame(x= c(-pi,pi)),aes(x = x))+
+         stat_function(fun = function(x) logfunction(x))+
+         labs(x=expression(~theta),y="log likelihood function")
+```
+
+# 3 Method-of-moments estimator
+The expression for $E (X \mid \theta)$ is:
+\begin{align*}
+E(X|\theta) & =\int^{2\pi}_{0}x\frac{1-\cos(x-\theta)}{2\pi}dx\\
+            & =\frac{1}{2\pi}\left[\int^{2\pi}_{0}xdx-\int^{2\pi}_{0}x\cos(x-\theta)dx\right]\\
+            & =\frac{1}{2\pi}\left[\frac{1}{2}x^2\big |^{2\pi}_{0}-xsin(x-\theta)\big |^{2\pi}_{0}\right]\\
+            & =\frac{1}{2\pi}\left(2\pi^{2}+2\pi\sin\theta\right)\\
+            & =\pi+\sin\theta
+\end{align*}
+\newline \newline
+And $\bar X_n$ is 3.236842, so we can get $\theta$:
+\begin{align*}
+\theta & = \arcsin(mean(x)-\pi)\quad or\quad \pi-\arcsin(mean(x)-\pi)\\
+       & = 0.095394\quad or\quad 3.046199\\
+\end{align*}
+
+# 4 Newton--Raphson method
+
+Find the MLE for $\theta$ using the Newton--Raphson method initial value $\theta_0 = \tilde\theta_n$. In this question, we will calculate$\ell'(\theta),\ell''(\theta)$ as follow:
+\begin{align*}
+\ell'(\theta) = \sum^n_{i=1}{\frac{-sin(x-\theta)}{1-cos(x-\theta)}}\\
+\ell"(\theta) = \sum^n_{i=1}{\frac{1}{cos(x-\theta)-1}}
+\end{align*}
+Newton--Raphson method:
+```{r code2, results='hold'}
+library(pracma)
+derivative_1 <- function(x) {         #calculate the derivative of log likelihood function
+  dev1 <- 0
+  for (i in 1:length(X)){
+    dev1 <- dev1-sin(X[i]-x)/(1-cos(X[i]-x))
+  }
+  dev1
+}
+derivative_2 <- function(x) {  #calculate the second derivative of log likelihood function
+  dev2 <- 0
+  for (i in 1:length(X)){
+    dev2 <- dev2+1/(cos(X[i]-x)-1)
+  }
+  dev2
+}
+x_initial <- 0.095394
+result1 <- newtonRaphson(derivative_1,x_initial,dfun = derivative_2)
+x_initial <- 3.046199
+result2 <- newtonRaphson(derivative_1,x_initial,dfun = derivative_2)
+```
+If we start with $\theta = 0.095394$ we will get $root = 0.003118157$, when we start with $\theta = 3.046199$ the root is $3.170715$.
+
+# 5 Solutions find  using selected $\theta = \pm2.7$
+
+We can just change the initial vaule of $\theta$ to find the root:
+```{r code3, results='hold'}
+x_initial <- 2.7
+result3 <- newtonRaphson(derivative_1,x_initial,dfun = derivative_2)
+x_initial <- -2.7
+result4 <- newtonRaphson(derivative_1,x_initial,dfun = derivative_2)
+```
+If we start with $\theta = 2.7$ we will get $root = 2.848415$, when we start with $\theta = -2.7$ the root is $-2.668857$.
+
+# 6 Solutions using $\theta$ between $-\pi$ and $\pi$
+
+```{r code4, results='hold',warning=FALSE}
+library("pander")
+options(digits = 5)
+x_initial <- seq(-pi,pi,length = 200)
+result <- matrix(0,1,length(x_initial))
+for (i in 1:length(x_initial)){
+  result[i] <- newtonRaphson(derivative_1,x_initial[i],dfun = derivative_2) 
+}
+plot(x_initial, result, title("Initial values and roots"))
+table = rbind(x_initial,result)
+set.caption("Initial values and roots")
+pander(table,split.table = 100,style = 'rmarkdown')
+```
+So we have get the table of initial value and root, we can see there are several groups of the results, they are 
+```{r code5, include=FALSE}
+roots <- c(-3.1125,-2.7866,-2.6689,-2.5094,-2.3883,-2.2979,-2.2322,-1.6627,-1.4475,-0.9544,-0.0031182,-0.81264,2.0072,2.237,2.3747,2.4884,2.8484,3.1707)
+freq <- c(11,2,5,6,1,4,1,24,1,19,42,46,8,2,6,2,15,5)
+table1 <- rbind(roots,freq)
+```
+```{r code6, results='hold'}
+pander(table1)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
