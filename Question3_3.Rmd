@@ -4,7 +4,7 @@ output: pdf_document
 author: "Hukai Luo"
 date: "`r format(Sys.time(), '%d %B %Y')`"
 abstract:
-    In this assignment, we use the probability density function to find the log-likelihood function and the method-of-moments estimator of $\theta$. Then we will discuss the influence of different initial value when using Newton-Raphson method to estimate the Maximum Likelihood Estimation for $\theta$.
+    In this assignment, we will use the Modeling beetle data to estimate the K and r using two different methods, and compare them.
 ---
 
 # 1 Question
@@ -28,6 +28,86 @@ equation is given by
 N_t = f(t) = \frac{K N_0}{N_0 + (K - N_0)\exp(-rt)},
 \]
 where $N_t$ denotes the population size at time $t$.
+
 - Fit the population growth model to the beetles data using the Gauss-Newton approach, to minimize the sum of squared errors between model predictions and observed counts.
 - Show the contour plot of the sum of squared errors.
 - In many population modeling application, an assumption of lognormality is adopted. That is , we assume that $\log N_t$ are independent and normally distributed with mean $\log f(t)$ and variance $\sigma^2$. Find the maximum likelihood estimators of $\theta = (r, K, \sigma^2)$ using any suitable method of your choice. Estimate the variance your parameter estimates.
+
+# 2 Fit the growth model to the beetles
+
+We've already known the $N(t)$ equation
+\[
+N_t = f(t) = \frac{K N_0}{N_0 + (K - N_0)\exp(-rt)},
+\]
+So r is given by 
+\[
+r = \frac{1}{t} log(\frac{N_t (k - N_0)}{N_0 (k - N_t)}
+\]
+When $t = 0$, $N_t = N_0 = 2$
+\[
+r = \frac{1}{t} log(\frac{N_t (k - 2)}{2 (k - N_t)}
+\]
+To soleve this question, choose $K = 1500$
+```{r code1, results='hide'}
+K <- 1300
+r <- log((beetles$beetles*(K-2))/(K - beetles$beetles)*2)/beetles$days
+min(r[2:10])
+max(r[2:10])
+mean(r[2:10])
+```
+So we get $min(r) = 0.05956362$ , $max(r) = 0.5723223$ , $mean(r) = 0.1681074$
+
+Now lets calculate the squared errors
+\[
+SE = \sum [N_t-\frac{2K}{2+(K-2)e^{-rt}}]^2
+\]
+```{r code2, results='hide'}
+K <- seq(500,1500,length=1000)
+R <- seq(0.05,0.6,length=1000)
+SE <- function(k,r){
+  se = sum((beetles$beetles-2*k/(2+(k-2)*exp(-r*beetles$days)))^2)
+  se
+}
+```
+Now let's try to minimize the sum of squared errors by cahnging K and R, we will use function nls() to do this work. Using the extimated $K$ and $mean(r)$ 
+```{r code3, results='hode'}
+nls(beetles ~ N*2/(2+(N-2)*exp((-r)*days)),start = list(N = 1300, r = 0.1681074),data = beetles)
+```
+In this way we get $K = 1049.4$ and $r = 0.1183$
+
+# 3 Contour plot of the sum of squared errors
+```{r code4, results='hide'}
+b <- matrix(0,1000,1000)
+for(j in 1:length(K)){
+  for(i in 1:length(R)){
+    b[j,i] = SE(K[j],R[i])
+  }
+}
+contour(K,R,b,xlab="K",ylab="r",main="contour plot of squared errors")
+```
+
+# 4 MLE using an assumption of lognormality
+
+First of all, we  could get the log-likelihood using normal distribution
+\begin{align*}
+ \ell(r,k,\sigma^2) = \sum_{1}^{N}{log(N[logf(t),\sigma^2])}
+\end{align*}
+```{r code5, results='hode'}
+loglike <- function(x){
+  k <- x[1]
+  r <- x[2]
+  sigma_2 <- x[3]
+  sum=0
+  for(i in 1:10){
+  sum=sum+(-(log(2*pi*sigma_2))/2-(log(beetles$beetles[i])-log((2*k)/(2+(k-2)*exp(-r*beetles$days[i]))))^2/(2*sigma_2))
+  }
+  -sum
+}
+options(warn=-1)
+opt=optim(c(1300,0.168,4),loglike,method="BFGS",hessian=TRUE)
+opt
+```
+In this way, we can get $K = 1293.9$, $r = 0.160$, $\sigma^2 = 0.511$, these answers are not quite consistent with what we get before(we get $K = 1049.4$ and $r = 0.1183$). That may show the assumption is not so good.
+
+
+
