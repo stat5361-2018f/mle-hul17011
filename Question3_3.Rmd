@@ -1,0 +1,33 @@
+---
+title: "Question3-3"
+output: pdf_document
+author: "Hukai Luo"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+abstract:
+    In this assignment, we use the probability density function to find the log-likelihood function and the method-of-moments estimator of $\theta$. Then we will discuss the influence of different initial value when using Newton-Raphson method to estimate the Maximum Likelihood Estimation for $\theta$.
+---
+
+# 1 Question
+
+Modeling beetle data
+The counts of a floor beetle at various time points (in days) are given in a dataset.
+```{r beetles}
+beetles <- data.frame(
+    days    = c(0,  8,  28,  41,  63,  69,   97, 117,  135,  154),
+    beetles = c(2, 47, 192, 256, 768, 896, 1120, 896, 1184, 1024))
+```
+A simple model for population growth is the logistic model given by
+\[
+\frac{dN}{dt} = r N(1 - \frac{N}{K}),
+\]
+where $N$ is the population size, $t$ is time, $r$ is an unknown growth rate
+parameter, and $K$ is an unknown parameter that represents the population
+carrying capacity of the environment. The solution to the differential
+equation is given by
+\[
+N_t = f(t) = \frac{K N_0}{N_0 + (K - N_0)\exp(-rt)},
+\]
+where $N_t$ denotes the population size at time $t$.
+- Fit the population growth model to the beetles data using the Gauss-Newton approach, to minimize the sum of squared errors between model predictions and observed counts.
+- Show the contour plot of the sum of squared errors.
+- In many population modeling application, an assumption of lognormality is adopted. That is , we assume that $\log N_t$ are independent and normally distributed with mean $\log f(t)$ and variance $\sigma^2$. Find the maximum likelihood estimators of $\theta = (r, K, \sigma^2)$ using any suitable method of your choice. Estimate the variance your parameter estimates.
